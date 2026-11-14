@@ -1,0 +1,660 @@
+.root-bg {
+    -fx-background-color: #F4F8FF;
+    -fx-in-bg: #E5EEFF;
+    -fx-in-border: #DDE9FF;
+    -fx-in-text: #111827;
+    -fx-in-subtle: #6B7280;
+    -fx-out-bg: #1882FF;
+    -fx-out-border: rgba(255,255,255,0.25);
+    -fx-out-text: white;
+    -fx-out-subtle: rgba(255,255,255,0.85);
+}
+.panel {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #D9E6FF;
+    -fx-border-width: 1;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(24,130,255,0.08), 12, 0.2, 0, 2);
+}
+.sidebar { -fx-padding: 12; }
+.sidebar.collapsed {
+    -fx-min-width: 96;
+    -fx-pref-width: 96;
+    -fx-max-width: 96;
+    -fx-padding: 12 8 12 8;
+}
+.side-icon {
+    -fx-min-width: 40; -fx-pref-width: 40; -fx-max-width: 40;
+    -fx-min-height: 40; -fx-pref-height: 40; -fx-max-height: 40;
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-font-size: 16px;
+    -fx-padding: 0;
+}
+.side-icon:hover { -fx-background-color: rgba(0,0,0,0.05); -fx-cursor: hand; }
+.logout-btn {
+    -fx-background-color: #EF4444;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+.logout-btn:hover { -fx-background-color: #DC2626; }
+.logout-compact {
+    -fx-padding: 0;
+    -fx-min-width: 40; -fx-pref-width: 40; -fx-max-width: 40;
+    -fx-min-height: 40; -fx-pref-height: 40; -fx-max-height: 40;
+}
+.list-scroll { -fx-background-color: transparent; }
+.list-scroll .scroll-bar:horizontal { -fx-opacity: 0; -fx-pref-height: 0; }
+.sidebar.collapsed .list-scroll .viewport > .content { -fx-padding: 4 8 4 12; }
+.chat-item {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 10;
+    -fx-padding: 8;
+    -fx-cursor: hand;
+}
+.chat-item:hover { -fx-background-color: #EFF6FF; }
+.sidebar.collapsed .chat-item { -fx-padding: 4; -fx-background-insets: 0; -fx-spacing: 0; }
+.panel-title { -fx-font-size: 16px; -fx-font-weight: bold; }
+.search-field {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #C6DAFF;
+    -fx-border-width: 1;
+    -fx-padding: 8 10 8 10;
+}
+.search-field:focused {
+    -fx-border-color: #1882FF;
+    -fx-effect: dropshadow(gaussian, rgba(24,130,255,0.25), 8, 0.2, 0, 0);
+}
+.chat-name { -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.chat-last { -fx-text-fill: #6B7280; -fx-font-size: 12px; }
+
+.center-panel {}
+.chat-header {
+    -fx-background-color: linear-gradient(to bottom, #FFFFFF, #F9FBFF);
+    -fx-background-radius: 12;
+    -fx-border-color: #E3EEFF;
+    -fx-border-radius: 12;
+}
+.chat-title { -fx-font-size: 16px; -fx-font-weight: bold; }
+.chat-status-online { -fx-text-fill: #16A34A; -fx-font-size: 12px; }
+.chat-status-offline { -fx-text-fill: #9CA3AF; -fx-font-size: 12px; }
+.action-btn {
+    -fx-background-color: #E8F1FF;
+    -fx-text-fill: #0B5ED7;
+    -fx-background-radius: 8;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+.action-btn:hover { -fx-background-color: #DCEAFF; }
+.message-scroll { -fx-background-color: transparent; }
+.placeholder { -fx-text-fill: #9CA3AF; }
+.input-bar {
+    -fx-background-color: #F7FAFF;
+    -fx-background-radius: 12;
+    -fx-border-color: #E3EEFF;
+    -fx-border-radius: 12;
+}
+
+/*=========== REPLY FRAME =========== */
+.reply-bar {
+    -fx-background-color: #F7FAFF; /* giống input-bar */
+    -fx-background-radius: 12;
+    -fx-border-color: #E3EEFF;
+    -fx-border-radius: 12;
+}
+
+.reply-accent {
+    -fx-background-color: #5B8DEF; /* xanh nhạt viền trái */
+    -fx-background-radius: 2 0 0 2;
+}
+
+.reply-title {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6B7280; /* xám nhạt */
+}
+
+.reply-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: #0F172A;
+}
+
+.reply-close {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-text-fill: #6B7280;
+}
+
+.reply-close:hover {
+    -fx-text-fill: #111827;
+}
+
+.reply-thumb {
+    -fx-background-color: rgba(0,0,0,0.04);
+    -fx-background-radius: 8;
+}
+/*==================================================== */
+.icon-btn {
+    -fx-background-color: #E8F1FF;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+/* Nút tìm kiếm (🔍) trong panel phải */
+.search-icon-btn {
+    -fx-font-size: 22px;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 0;               /* bỏ padding mặc định của Button */
+    -fx-alignment: center;        /* đảm bảo icon căn giữa */
+    -fx-min-height: 28;
+    -fx-pref-height: 28;
+    -fx-max-height: 28;
+}
+
+.search-icon-btn:hover {
+    -fx-background-color: rgba(0,0,0,0.05);
+    -fx-background-radius: 8;
+}
+
+.icon-btn:hover { -fx-background-color: #DCEAFF; }
+.send-btn {
+    -fx-background-color: #1882FF;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 6 16;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+.send-btn:hover { -fx-background-color: #0F6FDE; }
+.button.msg-menu {
+  -fx-background-color: transparent;
+  -fx-text-fill: -fx-accent;
+  -fx-font-size: 14px;
+  -fx-padding: 2 6 2 6;
+}
+.button.msg-menu:hover {
+  -fx-background-color: rgba(0,0,0,0.06);
+  -fx-background-radius: 6;
+}
+.context-menu.msg-context {
+  -fx-background-color: white;
+  -fx-background-radius: 8;
+  -fx-background-insets: 0;
+  -fx-padding: 6 4;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,.20), 12, 0.2, 0, 2);
+}
+.menu-item.msg-context-item,
+.menu-item.msg-context-item-danger {
+  -fx-padding: 6 12;
+  -fx-background-color: transparent;
+}
+.menu-item.msg-context-item .label {
+  -fx-font-size: 12px;
+  -fx-text-fill: #111827;
+}
+.menu-item.msg-context-item-danger .label {
+  -fx-font-size: 12px;
+  -fx-text-fill: #DC2626;
+}
+.menu-item.msg-context-item:hover,
+.menu-item.msg-context-item:focused,
+.menu-item.msg-context-item:armed {
+  -fx-background-color: rgba(0,0,0,0.06);
+  -fx-background-radius: 6;
+}
+.menu-item.msg-context-item:hover .label,
+.menu-item.msg-context-item:focused .label,
+.menu-item.msg-context-item:armed .label {
+  -fx-text-fill: #111827;
+}
+.menu-item.msg-context-item-danger:hover,
+.menu-item.msg-context-item-danger:focused,
+.menu-item.msg-context-item-danger:armed {
+  -fx-background-color: rgba(220,38,38,0.06);
+  -fx-background-radius: 6;
+}
+.menu-item.msg-context-item-danger:hover .label,
+.menu-item.msg-context-item-danger:focused .label,
+.menu-item.msg-context-item-danger:armed .label {
+  -fx-text-fill: #B91C1C;
+}
+.dialog-pane.msg-edit-dialog {
+  -fx-background-color: white;
+  -fx-background-radius: 12;
+}
+.dialog-pane.msg-edit-dialog .header-panel { -fx-padding: 6 12; }
+.dialog-pane.msg-edit-dialog .content { -fx-padding: 12; }
+.dialog-pane.msg-edit-dialog .button-bar .button {
+  -fx-background-radius: 8;
+}
+
+.info-header { -fx-padding: 8 0 4 0; }
+.info-name { -fx-font-size: 15px; -fx-font-weight: bold; }
+.menu-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #0F172A;
+    -fx-padding: 10 12;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+.menu-item:hover { -fx-background-color: #EFF6FF; }
+
+.root {
+    -fx-in-bg: #E5EEFF;
+    -fx-in-border: #DDE9FF;
+    -fx-in-text: #111827;
+    -fx-in-subtle: #6B7280;
+    -fx-out-bg: #1882FF;
+    -fx-out-border: rgba(255,255,255,0.25);
+    -fx-out-text: white;
+    -fx-out-subtle: rgba(255,255,255,0.85);
+}
+#incoming-text, #incoming-image, #incoming-file, #incoming-voice, #incoming-video {
+    -fx-background-color: -fx-in-bg;
+    -fx-background-radius: 12;
+    -fx-border-color: -fx-in-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+#outgoing-text, #outgoing-image, #outgoing-file, #outgoing-voice, #outgoing-video {
+    -fx-background-color: -fx-out-bg;
+    -fx-background-radius: 12;
+    -fx-border-color: -fx-out-border;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 12;
+}
+#incoming-text, #outgoing-text { -fx-padding: 8 12; -fx-background-radius: 14; -fx-border-radius: 14; }
+#incoming-text Label { -fx-text-fill: -fx-in-text; -fx-font-size: 14px; }
+#outgoing-text Label { -fx-text-fill: -fx-out-text; -fx-font-size: 14px; }
+#incoming-image, #outgoing-image { -fx-padding: 6; }
+#incoming-image Label { -fx-text-fill: -fx-in-subtle; -fx-font-size: 11px; }
+#outgoing-image Label { -fx-text-fill: -fx-out-subtle; -fx-font-size: 11px; }
+#incoming-file, #outgoing-file { -fx-padding: 10 12; }
+#incoming-file .file-name { -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+#outgoing-file .file-name { -fx-font-weight: bold; -fx-text-fill: white; }
+#incoming-file .meta { -fx-font-size: 11px; -fx-text-fill: -fx-in-subtle; }
+#outgoing-file .meta { -fx-font-size: 11px; -fx-text-fill: -fx-out-subtle; }
+#incoming-voice, #outgoing-voice { -fx-padding: 8 12; }
+#incoming-voice Label { -fx-text-fill: -fx-in-text; -fx-font-size: 11px; }
+#outgoing-voice Label { -fx-text-fill: -fx-out-text; -fx-font-size: 11px; }
+#incoming-voice .audio-btn { -fx-background-color: rgba(0,0,0,0.05); -fx-text-fill: -fx-in-text; }
+#outgoing-voice .audio-btn { -fx-background-color: rgba(255,255,255,0.25); -fx-text-fill: -fx-out-text; }
+#incoming-video, #outgoing-video { -fx-padding: 8 12; }
+#incoming-video Label { -fx-text-fill: -fx-in-subtle; -fx-font-size: 11px; }
+#outgoing-video Label { -fx-text-fill: -fx-out-subtle; -fx-font-size: 11px; }
+#incoming-video Button, #outgoing-video Button { -fx-background-radius: 8; -fx-padding: 4 10; }
+#incoming-video Button { -fx-background-color: rgba(0,0,0,0.05); -fx-text-fill: -fx-in-text; }
+#outgoing-video Button { -fx-background-color: rgba(255,255,255,0.25); -fx-text-fill: -fx-out-text; }
+#incoming-video Slider, #outgoing-video Slider { -fx-pref-width: 220; }
+/* chip chung */
+.reply-chip {
+    -fx-background-color: rgba(192, 196, 204, 0.18); /* bạc nhạt, hợp cả nền sáng/tối */
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(192, 196, 204, 0.55);     /* viền bạc */
+    -fx-border-radius: 8;
+    -fx-padding: 6 8;
+}
+.reply-chip-title {
+    -fx-font-size: 11px;
+    -fx-text-fill: #8B8F97; /* bạc đậm hơn cho title */
+}
+.reply-chip-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: #2b2f36; /* xám đậm, vẫn đọc được khi đặt trong outgoing (nền xanh) */
+}
+
+/* nếu chip nằm trong bubble outgoing (nền xanh), tăng độ mờ nền cho dễ đọc */
+#outgoing-text .reply-chip,
+#outgoing-image .reply-chip,
+#outgoing-file .reply-chip,
+#outgoing-voice .reply-chip,
+#outgoing-video .reply-chip {
+    -fx-background-color: rgba(255,255,255,0.35);
+    -fx-border-color: rgba(255,255,255,0.55);
+}
+#outgoing-text .reply-chip-title,
+#outgoing-image .reply-chip-title,
+#outgoing-file .reply-chip-title,
+#outgoing-voice .reply-chip-title,
+#outgoing-video .reply-chip-title {
+    -fx-text-fill: rgba(255,255,255,0.95);
+}
+#outgoing-text .reply-chip-text,
+#outgoing-image .reply-chip-text,
+#outgoing-file .reply-chip-text,
+#outgoing-voice .reply-chip-text,
+#outgoing-video .reply-chip-text {
+    -fx-text-fill: white;
+}
+
+/* highlight nhẹ khi auto-scroll đến tin nhắn gốc (pseudo-class do code set) */
+HBox:reply-target, VBox:reply-target {
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.55), 16, 0.25, 0, 0);
+}
+
+.msg-menu {
+  -fx-background-color: transparent;
+  -fx-background-radius: 6;
+  -fx-padding: 2 6 2 6;
+  -fx-cursor: hand;
+  -fx-text-fill: #6B7280;
+  -fx-font-weight: bold;
+}
+.msg-menu:hover {
+  -fx-background-color: rgba(0,0,0,0.06);
+  -fx-text-fill: #111827;
+}
+
+
+.menu-pane {
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #D9E6FF;
+    -fx-border-width: 1;
+    -fx-padding: 0;
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(24,130,255,0.08), 8, 0.2, 0, 1);
+}
+.menu-pane > .title {
+    -fx-background-color: #F4F8FF;
+    -fx-background-insets: 0;
+    -fx-background-radius: 10 10 0 0;
+    -fx-padding: 10 12;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+    -fx-cursor: hand;
+}
+.menu-pane > .title:hover { -fx-background-color: #EFF6FF; }
+.menu-pane > *.content {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0 0 10 10;
+    -fx-padding: 8 12 10 12;
+    -fx-border-color: transparent;
+}
+.submenu { -fx-padding: 0 0 0 8; }
+.submenu-item { -fx-text-fill: #374151; -fx-font-size: 13px; -fx-padding: 6 4; -fx-background-radius: 6; }
+.submenu-item:hover { -fx-background-color: #EFF6FF; -fx-text-fill: #1882FF; }
+.empty-state { -fx-background-color: #f3f4f6; -fx-padding: 16; }
+.empty-title { -fx-font-size: 16px; -fx-text-fill: #111827; -fx-font-weight: bold; }
+.empty-subtitle { -fx-font-size: 12px; -fx-text-fill: #6b7280; }
+
+#voice-dialog { -fx-background-color: #FFFFFF; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 2); }
+#mic-icon { -fx-font-size: 48px; -fx-text-fill: #EF4444; }
+#status-label { -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1F2937; }
+#timer-label { -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #EF4444; }
+#wave-bar-0, #wave-bar-1, #wave-bar-2, #wave-bar-3, #wave-bar-4 { -fx-fill: #EF4444; }
+#stop-button { -fx-background-color: #EF4444; -fx-text-fill: white; -fx-background-radius: 50; -fx-padding: 10 20; -fx-font-size: 14px; -fx-cursor: hand; }
+#stop-button:hover { -fx-background-color: #DC2626; }
+#cancel-button { -fx-background-color: #6B7280; -fx-text-fill: white; -fx-background-radius: 50; -fx-padding: 10 20; -fx-font-size: 14px; -fx-cursor: hand; }
+#cancel-button:hover { -fx-background-color: #4B5563; }
+#play-button { -fx-background-color: #10B981; -fx-text-fill: white; -fx-background-radius: 50; -fx-padding: 10 20; -fx-font-size: 14px; -fx-cursor: hand; }
+#play-button:hover { -fx-background-color: #059669; }
+#send-button { -fx-background-color: #3B82F6; -fx-text-fill: white; -fx-background-radius: 50; -fx-padding: 10 20; -fx-font-size: 14px; -fx-cursor: hand; }
+#send-button:hover { -fx-background-color: #2563EB; }
+
+.settings-btn {
+  -fx-background-color: #3B82F6;
+  -fx-text-fill: white;
+  -fx-background-radius: 8;
+  -fx-padding: 8 12;
+  -fx-cursor: hand;
+  -fx-border-color: transparent;
+}
+.settings-btn:hover { -fx-background-color: #2563EB; }
+.settings-compact {
+  -fx-padding: 0;
+  -fx-min-width: 40; -fx-pref-width: 40; -fx-max-width: 40;
+  -fx-min-height: 40; -fx-pref-height: 40; -fx-max-height: 40;
+}
+
+.dark.root-bg {
+  -fx-background-color: #0F141B;
+  -fx-in-bg: #101827;
+  -fx-in-border: #1E293B;
+  -fx-in-text: #E6EAF2;
+  -fx-in-subtle: #A7B3C5;
+  -fx-out-bg: #1F6FEB;
+  -fx-out-border: rgba(255,255,255,0.18);
+  -fx-out-text: #FFFFFF;
+  -fx-out-subtle: rgba(255,255,255,0.85);
+}
+.dark .root-bg { -fx-background-color: #0F141B; }
+.dark .panel {
+  -fx-background-color: #121826;
+  -fx-border-color: #1E293B;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 14, 0.25, 0, 2);
+}
+.dark .chat-item { -fx-background-color: #101827; -fx-border-color: transparent; }
+.dark .chat-item:hover { -fx-background-color: #0B1220; }
+.dark .chat-name { -fx-text-fill: #E6EAF2; }
+.dark .chat-last { -fx-text-fill: #A7B3C5; }
+.dark .side-icon:hover { -fx-background-color: rgba(255,255,255,0.06); }
+.dark .chat-header { -fx-background-color: #101827; -fx-border-color: #1E293B; }
+.dark .chat-title { -fx-text-fill: #E6EAF2; }
+.dark .chat-status-online { -fx-text-fill: #16A34A; }
+.dark .chat-status-offline { -fx-text-fill: #A7B3C5; }
+.dark .action-btn { -fx-background-color: #172033; -fx-text-fill: #CFE1FF; -fx-border-color: transparent; }
+.dark .action-btn:hover { -fx-background-color: #1D2A44; }
+.dark .button:disabled { -fx-opacity: 0.55; }
+.dark .message-scroll,
+.dark .message-scroll > .viewport,
+.dark .scroll-pane,
+.dark .scroll-pane > .viewport { -fx-background-color: #0B1220; }
+.dark .empty-state { -fx-background-color: #101827; }
+.dark .empty-title { -fx-text-fill: #E6EAF2; }
+.dark .empty-subtitle { -fx-text-fill: #A7B3C5; }
+.dark .input-bar { -fx-background-color: #101827; -fx-border-color: #1E293B; }
+.dark .icon-btn { -fx-background-color: #172033; }
+.dark .icon-btn:hover { -fx-background-color: #1D2A44; }
+.dark .send-btn { -fx-background-color: #1F6FEB; -fx-text-fill: #FFFFFF; }
+.dark .send-btn:hover { -fx-background-color: #2E8AF6; }
+.dark .label { -fx-text-fill: #E6EAF2; }
+.dark .label.chat-status-online  { -fx-text-fill: #16A34A; } 
+.dark .label.chat-status-offline { -fx-text-fill: #C3D2E8; }
+.dark .button { -fx-text-fill: #E6EAF2; }
+.dark .menu-item .label { -fx-text-fill: #E6EAF2; }
+.dark .text-field { -fx-text-fill: #E6EAF2; -fx-background-color: transparent; -fx-border-color: #203049; }
+.dark .text-field:focused { -fx-border-color: #2E8AF6; }
+.dark .text-input, .dark .text-field, .dark .text-area { -fx-prompt-text-fill: rgba(230,234,242,0.45); }
+.dark #incoming-text, .dark #incoming-image, .dark #incoming-file, .dark #incoming-voice, .dark #incoming-video { -fx-background-color: -fx-in-bg; -fx-border-color: -fx-in-border; }
+.dark #incoming-text Label { -fx-text-fill: -fx-in-text; }
+.dark #outgoing-text Label { -fx-text-fill: -fx-out-text; }
+.dark #incoming-image Label { -fx-text-fill: -fx-in-subtle; }
+.dark #outgoing-image Label { -fx-text-fill: -fx-out-subtle; }
+.dark #incoming-file .file-name { -fx-text-fill: #E6EAF2; }
+.dark #outgoing-file .file-name { -fx-text-fill: #FFFFFF; }
+.dark #incoming-file .meta { -fx-text-fill: -fx-in-subtle; }
+.dark #outgoing-file .meta { -fx-text-fill: -fx-out-subtle; }
+.dark #incoming-voice .audio-btn { -fx-background-color: rgba(255,255,255,0.06); -fx-text-fill: -fx-in-text; }
+.dark #outgoing-voice .audio-btn { -fx-background-color: rgba(255,255,255,0.22); -fx-text-fill: -fx-out-text; }
+.dark .context-menu.msg-context { -fx-background-color: #101827; -fx-effect: dropshadow(gaussian, rgba(0,0,0,.60), 16, 0.3, 0, 3); }
+.dark .menu-item.msg-context-item .label { -fx-text-fill: #E6EAF2; }
+.dark .menu-item.msg-context-item:hover,
+.dark .menu-item.msg-context-item:focused,
+.dark .menu-item.msg-context-item:armed { -fx-background-color: rgba(255,255,255,0.06); }
+.dark .menu-item.msg-context-item-danger .label { -fx-text-fill: #F87171; }
+.dark .menu-item.msg-context-item-danger:hover { -fx-background-color: rgba(248,113,113,0.10); }
+.dark .menu-pane { -fx-background-color: #101827; -fx-border-color: #1E293B; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 10, 0.2, 0, 1); }
+.dark .menu-pane > .title { -fx-background-color: #121826; -fx-text-fill: #E6EAF2; }
+.dark .menu-pane > .title:hover { -fx-background-color: #0B1220; }
+.dark .menu-pane > *.content { -fx-background-color: #101827; }
+.dark .submenu-item { -fx-text-fill: #C7D3E3; }
+.dark .submenu-item:hover { -fx-background-color: #0B1220; -fx-text-fill: #CFE1FF; }
+.dark .msg-menu { -fx-text-fill: #A7B3C5; }
+.dark .msg-menu:hover { -fx-background-color: rgba(255,255,255,0.06); -fx-text-fill: #E6EAF2; }
+.dark .search-field { -fx-background-color: transparent; -fx-border-color: #203049; -fx-text-fill: #E6EAF2; }
+.dark .search-field:focused { -fx-border-color: #2E8AF6; -fx-effect: dropshadow(gaussian, rgba(46,138,246,0.25), 8, 0.2, 0, 0); }
+.dark .settings-btn { -fx-background-color: #1F6FEB; -fx-text-fill: #FFFFFF; }
+.dark .settings-btn:hover { -fx-background-color: #2E8AF6; }
+
+.settings-menu .menu-item { -fx-background-color: transparent; }
+.settings-menu .menu-item:hover { -fx-background-color: rgba(0,0,0,0.04); }
+.dark .settings-menu .menu-item:hover { -fx-background-color: rgba(255,255,255,0.06); }
+.settings-menu .menu-item .label { -fx-text-fill: #111827; }
+.settings-menu .menu-item.logout-item .label { -fx-text-fill: #EF4444; }
+.settings-menu .menu-item.logout-item:hover .label { -fx-text-fill: #DC2626; }
+.dark .settings-menu { -fx-background-color: #101827; -fx-effect: dropshadow(gaussian, rgba(0,0,0,.60), 16, 0.3, 0, 3); }
+.dark .settings-menu .menu-item .label { -fx-text-fill: #E6EAF2; }
+.dark .settings-menu .menu-item.logout-item .label { -fx-text-fill: #EF4444; }
+.dark .settings-menu .menu-item.logout-item:hover .label { -fx-text-fill: #DC2626; }
+
+
+.right-surface {
+  -fx-background-color: white;
+  -fx-border-color: #D9E6FF;
+  -fx-border-width: 1;
+  -fx-border-radius: 14;
+  -fx-background-radius: 14;
+}
+
+.dark .right-surface {
+  -fx-background-color: #121826;
+  -fx-border-color: #1E293B;
+}
+
+#rightStack {
+  -fx-background-color: white;
+  -fx-border-color: #D9E6FF;
+  -fx-border-width: 1;
+  -fx-border-radius: 14;
+  -fx-background-radius: 14;
+}
+.dark #rightStack {
+  -fx-background-color: #121826;
+  -fx-border-color: #1E293B;
+}
+
+.avatar-ring {
+  -fx-fill: transparent;
+  -fx-stroke: #111827;   
+  -fx-stroke-width: 1.2;
+}
+
+.dark .avatar-ring {
+  -fx-stroke: #FFFFFF;   
+}
+
+.date-chip {
+  -fx-background-color: transparent;
+  -fx-text-fill: #6B7280;
+  -fx-font-size: 11px;
+  -fx-padding: 6 0 2 0;
+  -fx-alignment: CENTER;
+}
+.date-chip { -fx-text-fill:#6B7280; -fx-font-size:11px; -fx-padding:6 0 4 0; }
+.search-result-row { -fx-spacing:6; }
+
+#searchPanel {
+  -fx-background-color: transparent;
+}
+
+/* ================== MEDIA LIB (RIGHT PANEL) ================== */
+
+/* TabPane cho "Ảnh / Video / Tài liệu" */
+.right-surface .tab-pane {
+  -fx-background-color: transparent;
+  -fx-padding: 0;
+}
+.right-surface .tab-pane > .tab-header-area {
+  -fx-padding: 0 0 8 0;
+  -fx-background-color: transparent;
+}
+.right-surface .tab-pane .tab-header-area .headers-region .tab {
+  -fx-background-radius: 8 8 0 0;
+  -fx-background-color: transparent;
+  -fx-padding: 6 12;
+  -fx-cursor: hand;
+}
+.right-surface .tab-pane .tab-header-area .headers-region .tab:hover {
+  -fx-background-color: rgba(24,130,255,0.06);
+}
+.right-surface .tab-pane .tab-header-area .headers-region .tab:selected {
+  -fx-background-color: rgba(24,130,255,0.12);
+}
+.right-surface .tab-pane .tab-header-area .tab-label {
+  -fx-text-fill: #0F172A;
+  -fx-font-size: 12px;
+  -fx-font-weight: bold;
+}
+
+/* Lưới thumbnail ảnh/video (ô vuông bo tròn) */
+.media-thumb {
+  -fx-background-color: #f3f4f6;
+  -fx-background-radius: 18;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 8, 0.2, 0, 1);
+  -fx-cursor: hand;
+}
+.media-thumb:hover { -fx-opacity: 0.92; }
+
+/* Nếu muốn danh sách tài liệu gọn hơn trong Right Panel */
+.right-surface #outgoing-file,
+.right-surface #incoming-file {
+  -fx-background-radius: 12;
+}
+
+/* ================== DARK MODE: MEDIA ================== */
+
+.dark .right-surface .tab-pane .tab-header-area .headers-region .tab:hover {
+  -fx-background-color: rgba(255,255,255,0.06);
+}
+.dark .right-surface .tab-pane .tab-header-area .headers-region .tab:selected {
+  -fx-background-color: rgba(255,255,255,0.10);
+}
+.dark .right-surface .tab-pane .tab-header-area .tab-label {
+  -fx-text-fill: #E6EAF2;
+}
+
+.dark .media-thumb {
+  -fx-background-color: #0F141B;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 8, 0.2, 0, 1);
+}
+
+
+/* Ẩn hoàn toàn thanh cuộn, vẫn cho lăn chuột */
+.media-scroll .scroll-bar:vertical,
+.media-scroll .scroll-bar:horizontal {
+  -fx-opacity: 0;
+  -fx-pref-width: 0;
+  -fx-pref-height: 0;
+}
+.media-scroll {
+  -fx-background-color: transparent;
+}
+.media-scroll > .viewport {
+  -fx-background-color: transparent;
+}
+
+/* Overlay actions (⬇️ / ❌) - Định nghĩa thống nhất */
+.overlay-action {
+  -fx-background-color: rgba(17,24,39,0.75);
+  -fx-text-fill: white;
+  -fx-background-radius: 10;
+  -fx-font-size: 16px;
+  -fx-padding: 6 10;
+  -fx-cursor: hand;
+  -fx-border-color: transparent;
+  -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 10, 0.2, 0, 2);
+}
+.overlay-action:hover {
+  -fx-background-color: rgba(17,24,39,0.95);
+}
+
+.dark .overlay-action {
+  -fx-background-color: rgba(31,41,55,0.85);
+  -fx-text-fill: #E6EAF2;
+}
+.dark .overlay-action:hover {
+  -fx-background-color: rgba(31,41,55,1.0);
+}

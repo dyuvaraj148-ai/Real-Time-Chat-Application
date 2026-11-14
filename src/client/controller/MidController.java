@@ -1,0 +1,868 @@
+package client.controller;
+
+import client.ClientConnection;
+import client.controller.mid.FileHandler;
+import client.controller.mid.MediaHandler;
+import client.controller.mid.MessageHandler;
+import client.controller.mid.UIMessageHandler;
+import client.controller.mid.UtilHandler;
+import client.controller.mid.VoiceRecordHandler;
+import common.Frame;
+import common.MessageType;
+import common.User;
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.media.MediaPlayer;
+import javafx.stage.Window;
+import javafx.util.Duration;
+import javax.sound.sampled.AudioFormat;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.io.ByteArrayInputStream;
+public class MidController {
+	public static final class MsgView {
+	    private final long epochMillis;
+	    private final boolean incoming;
+	    private final String text;
+	    public MsgView(long epochMillis, boolean incoming, String text) {
+	        this.epochMillis = epochMillis; this.incoming = incoming; this.text = text;
+	    }
+	    public long epochMillis(){ return epochMillis; }
+	    public boolean incoming(){ return incoming; }
+	    public String text(){ return text; }
+	}
+	public List<MsgView> exportMessagesForSearch() {
+	    return new ArrayList<>(this.messageSnapshot);
+	}
+	public MidController() {
+        Image tmp;
+        try {
+            tmp = new Image(getClass().getResourceAsStream("/client/view/images/default user.png"));
+        } catch (Exception e) {
+            tmp = new Image("https://via.placeholder.com/84");
+        }
+        defaultAvatar = tmp;
+    }
+    private Label currentChatName;
+    private Label currentChatStatus;
+    private VBox messageContainer;
+    private TextField messageField;
+    private Button logoutBtn;
+
+    private RightController rightController;
+    private String currentPeer;
+
+    private User currentUser;
+    private User selectedUser;
+    private ClientConnection connection;
+    
+    private ImageView midHeaderAvatar;
+	private HBox replyBar;
+	private ImageView replyThumb;
+	private Label replyFileIcon, replyTitle, replyContent;
+	private Button replyCloseBtn;
+	private HBox replyingRow = null;
+	private boolean replyingIncoming = false;
+
+    private ChangeListener<Number> autoScrollListener;
+    private final List<MsgView> messageSnapshot = new ArrayList<>();
+
+    private final Map<String, List<Frame>> pendingFileEvents = new ConcurrentHashMap<>();
+    private final Map<String, String> fileIdToName = new ConcurrentHashMap<>();
+    private final Map<String, String> fileIdToMime = new ConcurrentHashMap<>();
+    public final Map<String, HBox> outgoingFileBubbles = new ConcurrentHashMap<>();
+
+    private final Map<String, BufferedOutputStream> dlOut = new ConcurrentHashMap<>();
+
+    private final VoiceRecordHandler voiceRecordHandler = new VoiceRecordHandler();
+    private final Set<String> shownCallLogs = ConcurrentHashMap.newKeySet();
+    
+    private final ArrayDeque<HBox> pendingOutgoingTexts = new ArrayDeque<>();
+    
+    private final Map<String, HBox> pendingHistoryFileRows = new ConcurrentHashMap<>();
+    private final Map<String, MediaPlayer> videoPlayers = new ConcurrentHashMap<>();
+    
+    
+    MediaHandler mediaHandler = new MediaHandler(this);
+    private final Map<String, Long> fileIdToSize = new ConcurrentHashMap<>();
+    private final java.util.Map<String,String> fileIdToMsgId = new java.util.concurrent.ConcurrentHashMap<>();
+    
+    private final Map<String, java.util.List<HBox>> pendingReplyLinks = new ConcurrentHashMap<>();
+    public Map<String, HBox> getPendingHistoryFileRows() { return pendingHistoryFileRows; }
+    public java.util.Map<String,String> getFileIdToMsgId() { return fileIdToMsgId; }
+    public Map<String, Long> getFileIdToSize() { return fileIdToSize; }
+    public Map<String, java.util.List<HBox>> getPendingReplyLinks() {
+        return pendingReplyLinks;
+    }
+    private final ObservableMap<String, File> dlPath = FXCollections.observableHashMap();
+    private final ObservableMap<String, File> downloadedFiles = FXCollections.observableHashMap(); 
+    public ObservableMap<String, File> getDlPath() { return dlPath; }
+    public ObservableMap<String, File> getDownloadedFiles() {
+        return downloadedFiles;
+    }
+	public MediaHandler getMediaHandler() {
+		return mediaHandler;
+	}
+	private final Map<String, Image> avatarCache = new ConcurrentHashMap<>();
+	private LeftController leftController;
+	public void setLeftController(LeftController lc) {
+        this.leftController = lc;
+    }
+	private Image selfAvatar;
+	private final Image defaultAvatar;
+	public void setSelfAvatar(Image img) {
+        this.selfAvatar = img;
+        if (currentUser != null && currentUser.getUsername() != null && img != null) {
+            avatarCache.put(currentUser.getUsername(), img);
+        }
+    }
+    public void bind(Label currentChatName, Label currentChatStatus, VBox messageContainer, TextField messageField, ImageView midHeaderAvatar) {
+        this.currentChatName = currentChatName;
+        this.currentChatStatus = currentChatStatus;
+        this.messageContainer = messageContainer;
+        this.messageField = messageField;
+        this.midHeaderAvatar = midHeaderAvatar;
+
+        if (this.messageField != null) this.messageField.setOnAction(e -> onSendMessage());
+    }
+    
+    public void bindReplyBar(HBox bar, ImageView thumb, Label fileIcon,
+            Label title, Label content, Button closeBtn) {
+		this.replyBar = bar;
+		this.replyThumb = thumb;
+		this.replyFileIcon = fileIcon;
+		this.replyTitle = title;
+		this.replyContent = content;
+		this.replyCloseBtn = closeBtn;
+		
+		if (replyCloseBtn != null) {
+			replyCloseBtn.setOnAction(e -> clearReplyPreview());
+		}
+	}
+    public void setRightController(RightController rc) { this.rightController = rc; }
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+
+        if (user != null && user.getUsername() != null) {
+            byte[] bytes = user.getAvatar();
+            if (bytes != null && bytes.length > 0) {
+                try {
+                    Image img = new Image(new ByteArrayInputStream(bytes));
+                    this.selfAvatar = img;
+                    avatarCache.put(user.getUsername(), img);
+                } catch (Exception ignore) {}
+            }
+        }
+    }
+
+    public void setConnection(ClientConnection conn) {
+        this.connection = conn;
+        if (this.connection != null) {
+            this.connection.setMidController(this);
+        }
+        // KHÔNG gọi startListener ở đây nữa
+    }
+    
+    private Region findBubbleRegionInRow(HBox row) {
+        if (row == null) return null;
+        return findBubbleRegionRecursive(row);
+    }
+
+    private Region findBubbleRegionRecursive(Node node) {
+        if (node instanceof Region r) {
+            String id = r.getId();
+            if (id != null && (
+                    id.endsWith("-text")  ||
+                    id.endsWith("-image") ||
+                    id.endsWith("-file")  ||
+                    id.endsWith("-video") ||
+                    id.endsWith("-voice")
+            )) {
+                return r;
+            }
+        }
+        if (node instanceof Pane p) {
+            for (Node c : p.getChildren()) {
+                Region found = findBubbleRegionRecursive(c);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+
+    public void showReplyPreview(HBox row, boolean incoming) {
+        if (replyBar == null) return;
+
+        replyThumb.setVisible(false); replyThumb.setManaged(false);
+        replyFileIcon.setVisible(false); replyFileIcon.setManaged(false);
+        replyTitle.setText("Reply");
+        String preview = "Message";
+
+        Region bubble = findBubbleRegionInRow(row);
+        String bid = (bubble != null) ? bubble.getId() : null;
+
+        if (bid != null && bid.endsWith("-text")) {
+            if (bubble instanceof VBox vb) {
+                for (Node n : vb.getChildren()) {
+                    if (n instanceof Label lbl) { preview = lbl.getText(); break; }
+                }
+            }
+        } else if (bid != null && bid.endsWith("-image")) {
+            if (bubble instanceof VBox vb) {
+                for (Node n : vb.getChildren()) {
+                    if (n instanceof ImageView iv && iv.getImage()!=null) {
+                        replyThumb.setImage(iv.getImage());
+                        replyThumb.setVisible(true); replyThumb.setManaged(true);
+                        preview = "Photo";
+                        break;
+                    }
+                }
+            }
+        } else if (bid != null && bid.endsWith("-file")) {
+            if (bubble instanceof VBox vb) {
+                for (Node c : vb.lookupAll("#fileNamePrimary")) {
+                    if (c instanceof Label lbl) { preview = lbl.getText(); break; }
+                }
+            }
+            replyFileIcon.setText("📄");
+            replyFileIcon.setVisible(true); replyFileIcon.setManaged(true);
+            if (preview == null || preview.isBlank()) preview = "Attachment";
+        } else if (bid != null && bid.endsWith("-video")) {
+            replyFileIcon.setText("🎞️");
+            replyFileIcon.setVisible(true); replyFileIcon.setManaged(true);
+            preview = "Video";
+        } else if (bid != null && bid.endsWith("-voice")) {
+            replyFileIcon.setText("🎤");
+            replyFileIcon.setVisible(true); replyFileIcon.setManaged(true);
+            preview = "Voice message";
+        } else {
+            preview = "Message";
+        }
+
+        if (preview != null && preview.length() > 140) preview = preview.substring(0,140) + "…";
+        replyContent.setText(preview == null ? "" : preview);
+
+        replyBar.setVisible(true);
+        replyBar.setManaged(true);
+
+        this.replyingRow = row;
+        this.replyingIncoming = incoming;
+    }
+
+
+    public void clearReplyPreview() {
+        if (replyBar == null) return;
+        replyBar.setVisible(false);
+        replyBar.setManaged(false);
+        if (replyThumb != null) replyThumb.setImage(null);
+        this.replyingRow = null;
+    }
+    
+    public HBox getReplyingRow() { return replyingRow; }
+    public boolean isReplyingIncoming() { return replyingIncoming; }
+    public boolean hasReplyContext() { return replyingRow != null; }
+    
+    public void scrollToRow(HBox target) {
+        if (target == null || messageContainer == null) return;
+        // tìm ScrollPane chứa messageContainer
+        Node p = messageContainer.getParent();
+        while (p != null && !(p instanceof ScrollPane)) p = p.getParent();
+        if (!(p instanceof ScrollPane sp)) return;
+
+        // Tính vvalue tương đối của target trong container
+        target.layout(); messageContainer.layout(); sp.layout();
+        double y = target.getBoundsInParent().getMinY();
+        double contentH = messageContainer.getBoundsInLocal().getHeight();
+        double viewportH = sp.getViewportBounds().getHeight();
+        double max = Math.max(1e-6, contentH - viewportH);
+        double vv = Math.min(1.0, Math.max(0.0, y / max));
+
+        Platform.runLater(() -> {
+            sp.setVvalue(vv);
+            // hiệu ứng nhỏ để "nháy" highlight (tùy chọn)
+            target.pseudoClassStateChanged(javafx.css.PseudoClass.getPseudoClass("reply-target"), true);
+            new javafx.animation.PauseTransition(Duration.millis(900)).setOnFinished(e ->
+                target.pseudoClassStateChanged(javafx.css.PseudoClass.getPseudoClass("reply-target"), false)
+            );
+        });
+    }
+    
+    public void onDownloadCompleted(String fid, File completedFile) {
+        if (fid == null || fid.isBlank() || completedFile == null) return;
+
+        downloadedFiles.put(fid, completedFile);
+
+        if (connection != null) {
+            try {
+                long id = Long.parseLong(fid);      // only works for numeric fids
+                connection.markDownloadDone(id);
+            } catch (NumberFormatException ignore) {
+                // non-numeric (uuid/legacy) -> nothing to do unless you add a String overload
+            }
+        }
+    }
+    
+    public void onOutgoingFileSaved(String fid, long messageId, long fileId) {
+        if (fid == null || fid.isBlank()) return;
+
+        // Lưu map fid -> messageId để nơi khác có thể tra cứu
+        if (messageId > 0) {
+            fileIdToMsgId.put(fid, String.valueOf(messageId));
+        }
+
+        HBox row = outgoingFileBubbles.remove(fid);
+        if (row != null) {
+            // Gắn lại fid lên properties (để code khác còn truy vết nếu cần)
+            row.getProperties().put("fid", fid);
+
+            // QUAN TRỌNG: gắn messageId (numeric) vào userData -> menu Delete dùng được ngay
+            row.setUserData(String.valueOf(messageId));
+        }
+    }
+
+    public void openConversation(User u) {
+        System.out.println("[OPEN] conversation with " + u.getUsername());
+        this.selectedUser = u;
+        this.currentPeer = u.getUsername(); // ✅ FIX: remember current peer for 1-1 chat
+        if (messageField != null) messageField.clear();
+        if (currentChatName != null) currentChatName.setText(u.getUsername());
+
+        boolean online = u.isOnline();
+        String lastSeen = u.getLastSeenIso();
+        applyStatusLabel(currentChatStatus, online, lastSeen);
+        if (rightController != null) {
+            rightController.showUser(u, online, lastSeen);
+        }
+
+        Image peerAvatar = loadAvatarImage(u);
+        if (midHeaderAvatar != null && peerAvatar != null) {
+            midHeaderAvatar.setImage(peerAvatar);
+        }
+        if (rightController != null) {
+            rightController.setAvatar(peerAvatar);
+        }
+        if (u.getUsername() != null && peerAvatar != null) {
+            avatarCache.put(u.getUsername(), peerAvatar);
+        }
+        if (messageContainer != null) {
+            if (messageContainer.getChildren().size() > 100) {
+                messageContainer.getChildren().remove(0, messageContainer.getChildren().size() - 100);
+            }
+            messageContainer.getChildren().clear();
+        }
+
+        shownCallLogs.clear();
+        messageSnapshot.clear(); 
+        enableAutoScroll();
+
+        if (connection != null && connection.isAlive()) {
+            try {
+                connection.history(currentUser.getUsername(), u.getUsername(), 50);
+            } catch (Exception e) {
+                System.err.println("[HISTORY] Failed to load history: " + e.getMessage());
+                Platform.runLater(() -> showErrorAlert("Could not load message history: " + e.getMessage()));
+            }
+        }
+
+        List<Frame> pending = pendingFileEvents.remove(u.getUsername());
+        if (pending != null) pending.forEach(this::handleServerFrame);
+    }
+
+    
+    public void openGroupConversation(LeftController.GroupViewModel g) {
+        this.selectedUser = null;
+        this.currentPeer = "group:" + g.groupId; // để biết peer hiện tại là group
+
+        if (currentChatName != null) currentChatName.setText(g.name);
+        if (currentChatStatus != null) currentChatStatus.setText("Group • owner: " + g.owner);
+
+        // avatar nhóm:
+        Image groupAvatar = new Image(
+            Objects.requireNonNull(
+                getClass().getResource("/client/view/images/group.png")
+            ).toExternalForm()
+        );
+        if (midHeaderAvatar != null) midHeaderAvatar.setImage(groupAvatar);
+        if (rightController != null) rightController.setAvatar(groupAvatar);
+
+        // clear messageContainer như openConversation(user)
+        if (messageContainer != null) {
+            messageContainer.getChildren().clear();
+        }
+
+        shownCallLogs.clear();
+        messageSnapshot.clear();
+        enableAutoScroll();
+
+        // xin history từ server cho group
+        if (connection != null && connection.isAlive()) {
+            try {
+                // TOÀN BỘ CHỖ NÀY TÙY VÀO GIAO THỨC SERVER
+                // Ví dụ: history(fromUser, toPeer, limit)
+                // toPeer = "group:<id>"
+            	connection.groupHistory(currentUser.getUsername(), String.valueOf(g.groupId), 50);
+
+            } catch (Exception e) {
+                System.err.println("[HISTORY] Failed to load group history: " + e.getMessage());
+                Platform.runLater(() -> showErrorAlert("Could not load group history."));
+            }
+        }
+        if (rightController != null) {
+            User pseudoGroup = new User();
+            pseudoGroup.setUsername(g.name); // show group name
+            rightController.showGroup(pseudoGroup.getUsername(), groupAvatar);
+            rightController.setAvatar(new Image(
+                getClass().getResource("/client/view/images/group.png").toExternalForm()
+            ));
+        }
+        
+        String convKey = "group:" + g.groupId;
+        List<Frame> pending = pendingFileEvents.remove(convKey);
+        if (pending != null) {
+            for (Frame pf : pending) {
+                handleServerFrame(pf);
+            }
+        }
+    }
+    public Image loadAvatarImageForUser(String username) {
+        if (username == null || username.isBlank()) return defaultAvatar;
+
+        // 1. Nếu là chính mình
+        if (currentUser != null && username.equals(currentUser.getUsername())) {
+            if (selfAvatar != null) return selfAvatar;
+
+            byte[] bytes = currentUser.getAvatar();
+            if (bytes != null && bytes.length > 0) {
+                try {
+                    Image img = new Image(new ByteArrayInputStream(bytes));
+                    selfAvatar = img;
+                    avatarCache.put(username, img);
+                    return img;
+                } catch (Exception ignore) {}
+            }
+            return defaultAvatar;
+        }
+
+        // 2. Thử cache theo username
+        Image cached = avatarCache.get(username);
+        if (cached != null) {
+            System.out.println("[AVATAR] cache hit for " + username);
+            return cached;
+        }
+
+        // 3. Hỏi LeftController xem có User + avatar bytes không
+        if (leftController != null) {
+            User u = leftController.getUserByUsername(username);
+            if (u != null) {
+                byte[] bytes = u.getAvatar();
+                if (bytes != null && bytes.length > 0) {
+                    try {
+                        Image img = new Image(new ByteArrayInputStream(bytes));
+                        avatarCache.put(username, img);
+                        System.out.println("[AVATAR] loaded from LeftController for " + username);
+                        return img;
+                    } catch (Exception ignore) { }
+                }
+            }
+        }
+
+        System.out.println("[AVATAR] default for " + username);
+        return defaultAvatar;
+    }
+
+
+    private User findUserByUsername(String username) {
+        if (username == null || username.isBlank()) return null;
+
+        // 1. Kiểm tra currentUser và selectedUser (ưu tiên)
+        if (currentUser != null && currentUser.getUsername().equals(username)) return currentUser;
+        if (selectedUser != null && selectedUser.getUsername().equals(username)) return selectedUser;
+
+        // 2. Tìm kiếm trong cache của LeftController
+        if (leftController != null) {
+            return leftController.getUserByUsername(username); // <-- Cần thêm hàm này vào LeftController
+        }
+
+        // 3. Nếu không tìm thấy, trả về null (và loadDefaultAvatar sẽ được gọi)
+        return null; 
+    }
+
+    // 👇 CHỈNH SỬA: Hàm default
+    private Image loadDefaultAvatar() {
+         return new Image(
+            Objects.requireNonNull(
+                getClass().getResource("/client/view/images/default user.png")
+            ).toExternalForm()
+        );
+    }
+    private Image loadAvatarImage(User u) {
+        try {
+            byte[] bytes = (u != null) ? u.getAvatar() : null;
+            if (bytes != null && bytes.length > 0) {
+                return new Image(new java.io.ByteArrayInputStream(bytes));
+            }
+        } catch (Exception ignore) { }
+        return new Image(
+            Objects.requireNonNull(
+                getClass().getResource("/client/view/images/default user.png")
+            ).toExternalForm()
+        );
+    }
+
+    
+    private void snapshotText(String text, boolean incoming) {
+        if (text == null) return;
+        messageSnapshot.add(new MsgView(System.currentTimeMillis(), incoming, text));
+    }
+
+    public boolean markCallLogShownOnce(String callId) {
+        return callId != null && shownCallLogs.add(callId);
+    }
+    
+    private void handleServerFrame(Frame f) {
+        new MessageHandler(this).handleServerFrame(f);
+    }
+
+    public HBox findRowByUserData(String id) {
+        if (id == null) return null;
+        for (Node n : messageContainer.getChildren()) {
+            if (n instanceof HBox h) {
+                Object ud = h.getUserData();
+                if (ud != null && id.equals(String.valueOf(ud))) return h;
+            }
+        }
+        return null;
+    }
+
+    public boolean removeMessageById(String id) {
+        HBox row = findRowByUserData(id);
+        return row != null && messageContainer.getChildren().remove(row); 
+    }
+
+    public void showErrorAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    public void onSendMessage() {
+        if (messageField == null) return;
+        String text = messageField.getText().trim();
+        if (text.isEmpty()) return;
+
+        if (connection == null || !connection.isAlive()) {
+            showErrorAlert("Connection to the server was lost.");
+            return;
+        }
+
+     // ================== NHÁNH GROUP ==================
+        if (currentPeer != null && currentPeer.startsWith("group:")) {
+            try {
+                int groupId = Integer.parseInt(currentPeer.substring("group:".length()));
+
+                Long replyTo = null;
+                if (hasReplyContext()) {
+                    HBox row = getReplyingRow();
+                    if (row != null) {
+                        Object ud = row.getUserData();
+                        if (ud != null) {
+                            try { replyTo = Long.parseLong(String.valueOf(ud)); } catch (Exception ignore) {}
+                        }
+                        if (replyTo == null) {
+                            Object fid = row.getProperties().get("fid");
+                            if (fid != null) {
+                                try { replyTo = Long.parseLong(String.valueOf(fid)); } catch (Exception ignore) {}
+                            }
+                        }
+                        if (replyTo == null) {
+                            Object r2 = row.getProperties().get("replyTo");
+                            if (r2 != null) {
+                                try { replyTo = Long.parseLong(String.valueOf(r2)); } catch (Exception ignore) {}
+                            }
+                        }
+                    }
+                }
+
+                String wireBody = (replyTo != null && replyTo > 0)
+                        ? "[REPLY:" + replyTo + "]" + text
+                        : text;
+
+                Frame frame = new Frame(
+                        MessageType.GROUP_MSG,
+                        currentUser != null ? currentUser.getUsername() : "",
+                        String.valueOf(groupId),
+                        wireBody
+                );
+                connection.sendFrame(frame);
+
+                // Bubble local
+                HBox row = addTextMessage(
+                        text, 
+                        false, // outgoing
+                        null, // messageId sẽ được tag sau
+                        currentUser.getUsername(), 
+                        System.currentTimeMillis(), 
+                        0L // chưa chỉnh sửa
+                    );
+                // ✅ Đánh dấu pending để khi server trả messageId thì map vào
+                enqueuePendingOutgoing(row);
+
+                if (replyTo != null && replyTo > 0) {
+                    row.getProperties().put("replyTo", String.valueOf(replyTo));
+                    new UIMessageHandler(this).attachReplyChipById(
+                            row,
+                            false,
+                            String.valueOf(replyTo)
+                    );
+                }
+
+                messageField.clear();
+                clearReplyPreview();
+            } catch (Exception e) {
+                showErrorAlert("Could not send the group message: " + e.getMessage());
+            }
+            return;
+        }
+        
+        new MessageHandler(this).onSendMessage();
+        clearReplyPreview();
+    }
+
+
+    private ScrollPane findMessageScrollPane() {
+        if (messageContainer == null) return null;
+        Node p = messageContainer.getParent();
+        while (p != null && !(p instanceof ScrollPane)) p = p.getParent();
+        return (p instanceof ScrollPane sp) ? sp : null;
+    }
+
+    private void enableAutoScroll() {
+        ScrollPane sp = findMessageScrollPane();
+        if (sp == null) return;
+
+        if (autoScrollListener != null) {
+            messageContainer.heightProperty().removeListener(autoScrollListener);
+        }
+
+        autoScrollListener = (obs, oldV, newV) -> Platform.runLater(() -> {
+            sp.layout();
+            sp.setVvalue(1.0);
+        });
+        messageContainer.heightProperty().addListener(autoScrollListener);
+
+        Platform.runLater(() -> {
+            sp.layout();
+            sp.setVvalue(1.0);
+        });
+    }
+    
+    public void updateTextBubbleById(String id, String newText) {
+        HBox row = findRowByUserData(id);
+        if (row == null) return;
+        Node bubble = extractBubble(row);
+        if (!(bubble instanceof VBox vb)) return;
+        // Chỉ áp dụng cho bubble text
+        String bubbleId = (vb).getId();
+        if (!"incoming-text".equals(bubbleId) && !"outgoing-text".equals(bubbleId)) return;
+
+        for (Node n : vb.getChildren()) {
+            if (n instanceof Label lbl) {
+                lbl.setText(newText);
+                break;
+            }
+        }
+    }
+
+    private Node extractBubble(HBox row) {
+        if (row.getChildren().isEmpty()) return null;
+        Node first = row.getChildren().get(0);
+        Node last  = row.getChildren().get(row.getChildren().size() - 1);
+        if (first instanceof VBox) return first;
+        if (last instanceof VBox)  return last;
+        return first; 
+    }
+
+    
+    public void enqueuePendingOutgoing(HBox row) {
+        if (row != null) pendingOutgoingTexts.addLast(row);
+    }
+
+    public HBox findRowByFid(String fid) {
+        if (fid == null || fid.isBlank()) return null;
+        var mc = getMessageContainer();
+        if (mc == null) return null;
+        for (var n : mc.getChildren()) {
+            if (n instanceof HBox row) {
+                Object p = row.getProperties().get("fid");
+                if (p != null && fid.equals(String.valueOf(p))) return row;
+            }
+        }
+        return null;
+    }
+    public void tagNextPendingOutgoing(String dbIdStr) {
+        if (dbIdStr == null || dbIdStr.isBlank()) return;
+        try { Long.parseLong(dbIdStr); } catch (Exception e) { return; }
+        var mc = getMessageContainer();
+        if (mc != null && !mc.getChildren().isEmpty()) {
+            for (int i = mc.getChildren().size() - 1; i >= 0; i--) {
+                var n = mc.getChildren().get(i);
+                if (n instanceof HBox row) {
+                    Object ud = row.getUserData();
+                    boolean numeric = false;
+                    if (ud != null) { try { Long.parseLong(String.valueOf(ud)); numeric = true; } catch (Exception ignore) {} }
+                    if (!numeric) { row.setUserData(dbIdStr); break; }
+                }
+            }
+        }
+        if (getOutgoingFileBubbles() != null && !getOutgoingFileBubbles().isEmpty()) {
+            var it = getOutgoingFileBubbles().entrySet().iterator();
+            while (it.hasNext()) {
+                var e = it.next();
+                HBox row = e.getValue();
+                Object ud = row.getUserData();
+                boolean numeric = false;
+                if (ud != null) { try { Long.parseLong(String.valueOf(ud)); numeric = true; } catch (Exception ignore) {} }
+                if (!numeric) {
+                    row.getProperties().put("fid", String.valueOf(e.getKey()));
+                    row.setUserData(dbIdStr);
+                    it.remove();
+                    break;
+                }
+            }
+        }
+    }
+
+
+
+
+    public HBox addTextMessage(String text, boolean incoming, String messageId, String sender, long createdAt, long updatedAt) {
+        HBox row = new UIMessageHandler(this).addTextMessage(text, incoming, messageId, sender, createdAt, updatedAt);
+        snapshotText(text, incoming);
+        return row;
+    }
+    public HBox addImageMessage(Image img, String caption, boolean incoming, String messageId, String sender, long createdAt, long updatedAt) {
+        return new UIMessageHandler(this).addImageMessage(img, caption, incoming, messageId, sender, createdAt, updatedAt);
+    }
+    public HBox addFileMessage(String filename, String meta, boolean incoming, String messageId, String sender, long createdAt, long updatedAt) {
+        return new UIMessageHandler(this).addFileMessage(filename, meta, incoming, messageId, sender, createdAt, updatedAt);
+    }
+
+    // Bổ sung cho Voice/Video (vốn đã có messageId/fileId)
+    public HBox addVoiceMessage(String duration, boolean incoming, String fileId, String sender, long createdAt, long updatedAt) {
+        return new UIMessageHandler(this).addVoiceMessage(duration, incoming, fileId, sender, createdAt, updatedAt);
+    }
+
+    public HBox addVideoMessage(String filename, String meta, boolean incoming, String fileId, String sender, long createdAt, long updatedAt) {
+        return new UIMessageHandler(this).addVideoMessage(filename, meta, incoming, fileId, sender, createdAt, updatedAt);
+    }
+
+    public HBox addCallLog(String icon, String title, String subtitle, boolean incoming, String sender, long createdAt, long updatedAt) {
+        String text = (title == null ? "" : title)
+                + (subtitle == null || subtitle.isBlank() ? "" : " - " + subtitle);
+        return addTextMessage(text, incoming, null, sender, createdAt, updatedAt);
+    }
+
+    public void showOutgoingFile(String filename, String mime, long bytes, String fileId, String duration) {
+        new FileHandler(this).showOutgoingFile(filename, mime, bytes, fileId, duration);
+    }
+
+    public void updateVoiceBubbleFromUrl(HBox row, String fileUrl) {
+        new MediaHandler(this).updateVoiceBubbleFromUrl(row, fileUrl);
+    }
+
+    public void updateVideoBubbleFromUrl(HBox row, String fileUrl) {
+        new MediaHandler(this).updateVideoBubbleFromUrl(row, fileUrl);
+    }
+
+    public void updateImageBubbleFromUrl(HBox row, String fileUrl) {
+        new MediaHandler(this).updateImageBubbleFromUrl(row, fileUrl);
+    }
+
+    private void applyStatusLabel(Label lbl, boolean online, String lastSeenIso) {
+        new UIMessageHandler(this).applyStatusLabel(lbl, online, lastSeenIso);
+    }
+    
+    public void putVideoPlayer(String key, javafx.scene.media.MediaPlayer p) {
+        if (key == null) return;
+        var old = videoPlayers.put(key, p);
+        if (old != null) {
+            try { old.stop(); old.dispose(); } catch (Exception ignore) {}
+        }
+    }
+    public javafx.scene.media.MediaPlayer getVideoPlayer(String key) {
+        return key == null ? null : videoPlayers.get(key);
+    }
+    public void removeVideoPlayer(String key) {
+        var old = videoPlayers.remove(key);
+        if (old != null) { try { old.stop(); old.dispose(); } catch (Exception ignore) {} }
+    }
+    
+    public String humanize(String iso, boolean withDot) {
+        return new UtilHandler().humanize(iso, withDot);
+    }
+
+    private static String humanBytes(long v) {
+        return UtilHandler.humanBytes(v);
+    }
+
+    private static String formatDuration(int sec) {
+        return UtilHandler.formatDuration(sec);
+    }
+
+    private static UtilHandler.MediaKind classifyMedia(String mime, String name) {
+        return UtilHandler.classifyMedia(mime, name);
+    }
+
+    private static String jsonGet(String json, String key) {
+        return UtilHandler.jsonGet(json, key);
+    }
+
+    private static String guessExt(String mime, String fallbackName) {
+        return UtilHandler.guessExt(mime, fallbackName);
+    }
+
+    public void showVoiceRecordDialog(Window owner, AudioFormat format, File audioFile, Consumer<byte[]> onComplete) {
+        voiceRecordHandler.showVoiceRecordDialog(owner, format, audioFile, onComplete);
+    }
+    public void onIncomingFrame(Frame f) {
+        handleServerFrame(f);
+    }
+
+    public Label getCurrentChatName() { return currentChatName; }
+    public Label getCurrentChatStatus() { return currentChatStatus; }
+    public VBox getMessageContainer() { return messageContainer; }
+    public TextField getMessageField() { return messageField; }
+    public Button getLogoutBtn() { return logoutBtn; }
+    public RightController getRightController() { return rightController; }
+    public String getCurrentPeer() { return currentPeer; }
+    public User getCurrentUser() { return currentUser; }
+    public User getSelectedUser() { return selectedUser; }
+    public ClientConnection getConnection() { return connection; }
+    public Map<String, List<Frame>> getPendingFileEvents() { return pendingFileEvents; }
+    public Map<String, String> getFileIdToName() { return fileIdToName; }
+    public Map<String, String> getFileIdToMime() { return fileIdToMime; }
+    public Map<String, HBox> getOutgoingFileBubbles() { return outgoingFileBubbles; }
+    public Map<String, BufferedOutputStream> getDlOut() { return dlOut; }
+
+    public String getCurrentGroupChatName() {
+        if (currentChatName != null) {
+            return currentChatName.getText();
+        }
+        return null;
+    }
+
+
+}
